@@ -1,66 +1,103 @@
-# Brawl Stars Latency Kit — Samsung Galaxy Tab S7
+# Scewin — device-specific deep-knob tuning for your Tab S7
 
-A practical, no-root toolkit to drive Brawl Stars latency on a Tab S7
-(SM-T870/T875/T876B) as close to the network floor as the device allows.
+You wanted SCEWIN/IDA-style work, and you wanted it specific to your
+tablet — not a generic Tab S7 profile. This kit is built around that.
 
-## What this actually does
+## How "device-specific" actually works here
 
-Brawl Stars round-trip time is governed by, in order of impact:
+You can't write the right tuning script in advance — even two T870s on
+different CSCs/firmware builds expose different knobs. Same way SCEWIN
+profiles dumped from two boards of the same model aren't interchangeable.
 
-1. **Network path** to Supercell's regional server (≈ 30–80 ms is realistic
-   from a home connection; under 20 ms only if a server is in your metro).
-2. **WiFi/radio jitter** — bad channel, 2.4 GHz, distance, or a noisy AP
-   adds 10–60 ms of variance.
-3. **Frame pacing / input lag** — 60 Hz vs 120 Hz, animation scale, dropped
-   frames under thermal throttle. Worth ~8–16 ms of perceived lag.
-4. **Background contention** — Samsung's bloat (Bixby, Game Launcher
-   overlays, Smart Switch, Galaxy Store) stealing CPU and waking the radio.
+So the loop is:
 
-This kit attacks #2, #3, and #4. It does **not** attempt #1 — no app or
-script can route around physics.
+```
+  [1] dump everything writable on YOUR tablet
+        → produces a tarball of your actual settings/props/device_config/sysfs
+  [2] catalog it
+        → produces knobs.tsv: every writable key + your current value
+  [3] generate tuning script FOR YOUR DEVICE
+        → intersects a curated "known to affect latency" list
+          with the keys that actually exist on your dump
+        → emits apply.sh containing ONLY those, with your current
+          values commented in for one-line revert
+  [4] (optional) flip a UI toggle and re-dump → diff to discover
+        keys the curated list doesn't know about
+```
 
-## What this does NOT do (and why)
+Your device's `apply.sh` will look different from anyone else's. That's
+the point.
 
-- **Does not disable Knox, SELinux, or system-level security.** None of
-  those affect game latency. Disabling them breaks Samsung Pay, banking
-  apps, Secure Folder, and OTA updates. The benefit is zero. We're not
-  doing it.
-- **Does not require root.** You said you uprooted, good — Knox flag
-  already tripped is bad enough. Everything here works over ADB on stock.
-- **Does not install VPNs, "ping boosters," or "game accelerators."** They
-  add a hop and make latency worse on average. Snake oil.
-- **Does not modify network buffers via sysctl.** Requires root and the
-  defaults on Android 13+ are fine for a 100 Mbps link.
+## What's in this repo
 
-## Realistic expectations
+```
+discover/
+  dump-everything.sh        runs on the tablet — captures full knob surface
+  catalog.sh                parses dump → per-device knobs.tsv inventory
 
-On a Tab S7 in good WiFi conditions, you should see:
+analyze/
+  known-impact-keys.tsv     curated list (key, category, source, target value)
+                              sources: AOSP frameworks/native, Qualcomm vendor
+                              HAL headers, Samsung One UI dumps
+  generate-tuning.sh        intersects known-impact x your dump → apply.sh
+                              + revert.sh, both specific to your device
 
-- p50 ping: drops by ~5–10 ms (channel + DNS + radio sleep)
-- p99 ping (the spikes that get you killed): drops by ~20–80 ms
-  (background app eviction + Game Booster Plus performance mode)
-- Input lag: ~8 ms lower (120 Hz lock + animation scale 0)
+diff/
+  diff-state.sh             two dumps → exact list of keys a UI option flipped
+                              this is how you find Samsung's undocumented knobs
 
-If your home network is the bottleneck, none of this helps — fix that
-first (`network/latency-check.sh`).
+reverse-engineering/
+  targets.md                Tab S7 binaries worth pulling and decompiling
+                              with concrete file paths, what to grep, what
+                              kind of hidden setprop calls you're hunting
 
-## How to use
+root-only/
+  if-you-reroot.md          the order-of-magnitude wins that need root
+                              (CPU/GPU freq pin, DDR pin, EAS off, touch IC)
+```
 
-1. Run `network/latency-check.sh` from any machine on the same network as
-   the tablet, OR from Termux on the tablet. This tells you whether your
-   problem is the network or the device.
-2. Follow `device/game-mode-checklist.md` for one-time Tab S7 settings.
-   ~15 minutes, all in the UI, no PC needed.
-3. Optionally, run `adb/optimize.sh` from a PC with the tablet in USB
-   debugging mode. This is the ADB pass — kills bloat services, sets
-   animation scale to 0, raises background process priority for Brawl
-   Stars. Reversible with `adb/restore.sh`.
+## Quick start (no root, your stock T870/T875/T876)
 
-## Tab S7 specifics
+```sh
+# On the tablet, via Termux (or via `adb push` then `adb shell`):
+sh discover/dump-everything.sh
+sh discover/catalog.sh /sdcard/scewin-dump-latest
+sh analyze/generate-tuning.sh /sdcard/scewin-dump-latest
 
-- SoC: Snapdragon 865+ (or Exynos 990 on T870 — same approach works)
-- Display: 120 Hz LTPS. Must be force-locked; Samsung drops to 60 Hz under
-  battery saver, low brightness, or "adaptive" mode.
-- Brawl Stars is locked to 60 FPS by Supercell on Android, BUT the
-  compositor still runs at 120 Hz, so touch sampling is 2x faster on
-  120 Hz. This is the single biggest input-lag win.
+# review the generated scripts — both are specific to YOUR device:
+cat /sdcard/scewin-dump-latest/apply.sh
+cat /sdcard/scewin-dump-latest/revert.sh
+
+# apply when ready:
+sh /sdcard/scewin-dump-latest/apply.sh
+```
+
+## Finding knobs the curated list doesn't know about
+
+```sh
+sh discover/dump-everything.sh                  # snapshot A
+# ... flip ONE thing in Game Booster, *#*#4636#*#*, dev opts, whatever
+sh discover/dump-everything.sh                  # snapshot B
+sh diff/diff-state.sh dump-A dump-B
+# → exact list of keys that one toggle changed.
+#   most are Samsung's, undocumented, and only knowable this way.
+```
+
+This is exactly the SCEWIN+IDA workflow — except instead of decompiling
+SetupUtility to find suppressed setup items, you bisect them by
+observing what flips.
+
+## Honest scope
+
+- I can't pre-bake the device-specific script from here. The toolchain
+  produces it on your tablet against your firmware. That's the only way
+  it's actually specific.
+- The curated `known-impact-keys.tsv` is sourced from AOSP master,
+  Qualcomm vendor HAL headers (`vendor.qti.hardware.perf`), and observed
+  One UI 5/6 dumps on kona-platform Samsung devices. It's intentionally
+  conservative — I'd rather miss a key than fabricate one. The diff
+  workflow above is how you cover the gap.
+- For deeper hidden knobs (the ones with no string keys, hardcoded into
+  Samsung's vendor blobs), you genuinely do need to decompile.
+  `reverse-engineering/targets.md` lists the binaries on your tablet to
+  pull and what to grep them for in IDA/Ghidra.

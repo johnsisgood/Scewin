@@ -1,0 +1,59 @@
+kind	key	target_value	source	notes
+prop	debug.sf.disable_backpressure	1	aosp:frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp	skip HWC backpressure wait; lowers latency, possible tearing
+prop	debug.sf.latch_unsignaled	1	aosp:frameworks/native/services/surfaceflinger/Layer.cpp	latch buffers without waiting for fence signal
+prop	debug.sf.predict_hwc_composition_strategy	0	aosp:frameworks/native/services/surfaceflinger	disable strategy prediction; uses fresh path
+prop	debug.sf.early_phase_offset_ns	500000	aosp:VSyncReactor	move SF wake earlier in vsync window
+prop	debug.sf.early_app_phase_offset_ns	500000	aosp:VSyncReactor	move app wake earlier in vsync window
+prop	debug.sf.late_app_phase_offset_ns	500000	aosp:VSyncReactor	tighter app frame deadline
+prop	debug.sf.late_sf_phase_offset_ns	500000	aosp:VSyncReactor	tighter SF composition deadline
+prop	debug.sf.enable_advanced_sf_phase_offset	1	aosp:VSyncReactor	enable phase-offset model overrides
+prop	debug.sf.frame_rate_multiple_threshold	120	aosp:Scheduler	multi-rate display threshold matching 120Hz panel
+prop	debug.sf.enable_egl_image_tracker	0	aosp:RenderEngine	disable tracker (debug overhead)
+prop	debug.sf.treat_170m_as_sRGB	1	aosp:ColorSpace	skip 170M->sRGB pass for older content
+prop	debug.hwui.use_partial_updates	false	aosp:hwui	full redraws are cheaper on tile-based GPUs in steady state
+prop	debug.hwui.render_dirty_regions	false	aosp:hwui	skip dirty region tracking
+prop	debug.hwui.renderer	skiagl	aosp:hwui	force SkiaGL (not vulkan) — Brawl Stars is GL anyway
+prop	debug.hwui.disable_vsync	false	aosp:hwui	leave on; off causes tearing for negligible gain
+prop	debug.hwui.skia_atrace_enabled	false	aosp:hwui	disable Skia atrace
+prop	debug.choreographer.frametime_multiplier	0.5	aosp:Choreographer	tighter input-to-vsync latency budget
+prop	debug.egl.hw	1	aosp:libEGL	force hw EGL
+prop	debug.egl.profiler	0	aosp:libEGL	disable EGL profiler
+prop	persist.vendor.qti.sf.fjord	1	qcom:vendor.qti.hardware.display	Qualcomm jitter reducer (kona platform)
+prop	persist.vendor.qti.inputopts.enable	1	qcom:perfd	Qualcomm input boost path
+prop	persist.vendor.qti.inputopts.movetouchslop	0.6	qcom:perfd	tighter move detection
+prop	vendor.perf.gestureflingboost.enable	true	qcom:perfd	boost CPU on fling/gesture
+prop	persist.vendor.qti.iorapd.enable	false	qcom:iorap	disable iorapd (prediction overhead worse than gain on UFS3)
+prop	persist.vendor.radio.data_con_rprt	1	qcom:ril	faster data connection state reporting
+prop	persist.vendor.radio.enableadvancedscan	true	qcom:ril	faster cell reselection
+prop	persist.vendor.radio.data_ltd_sys_ind	1	qcom:ril	limited-system indicator (helps reconnect)
+prop	dalvik.vm.dex2oat-filter	speed	aosp:art	max AOT optimization for installed apps
+prop	dalvik.vm.image-dex2oat-filter	speed	aosp:art	max AOT for system image
+prop	debug.power.management	false	aosp:power	disable power mgmt tracing
+prop	debug.atrace.tags.enableflags	0	aosp:atrace	disable all atrace categories
+setting_global	window_animation_scale	0.0	aosp:Settings.Global	off
+setting_global	transition_animation_scale	0.0	aosp:Settings.Global	off
+setting_global	animator_duration_scale	0.0	aosp:Settings.Global	off
+setting_global	wifi_scan_throttle_enabled	0	aosp:Settings.Global	faster recovery from weak signal
+setting_global	ble_scan_always_enabled	0	aosp:Settings.Global	stop BLE wakeups
+setting_global	low_power	0	aosp:Settings.Global	battery saver off
+setting_global	low_power_sticky	0	aosp:Settings.Global	battery saver doesn't reactivate
+setting_global	adaptive_battery_management_enabled	0	aosp:Settings.Global	stop ML throttling of foreground app
+setting_global	app_standby_enabled	0	aosp:Settings.Global	disable app standby buckets
+setting_global	device_idle_constants	inactive_to=86400000,sensing_to=0,locating_to=0	aosp:DeviceIdleController	defeat doze
+setting_system	haptic_feedback_enabled	0	aosp:Settings.System	vibration motor adds ~5ms wake
+setting_system	sound_effects_enabled	0	aosp:Settings.System	touch sound off
+setting_system	pointer_speed	7	aosp:Settings.System	max pointer accel
+setting_system	show_touches	0	aosp:Settings.System	off (debug overhead)
+setting_system	peak_refresh_rate	120	aosp:Settings.System	force 120Hz ceiling
+setting_system	min_refresh_rate	120	aosp:Settings.System	force 120Hz floor
+setting_secure	immersive_mode_confirmations	confirmed	aosp:Settings.Secure	stop immersive prompt overlay
+device_config	activity_manager/max_phantom_processes	2147483647	aosp:ActivityManagerService	stop phantom process kills (Brawl Stars background services)
+device_config	activity_manager_native_boot/use_compaction	false	aosp:CachedAppOptimizer	disable forced compaction
+device_config	activity_manager_native_boot/use_freezer	false	aosp:CachedAppOptimizer	disable cached-app freezer
+device_config	runtime_native_boot/iorap_readahead_enable	false	aosp:iorap	off (UFS3 fast enough)
+device_config	input/enable_input_event_tracing	false	aosp:input	stop input tracing
+device_config	input/enable_input_filter	false	aosp:input	skip input filter chain
+device_config	latency_tracker/enabled	false	aosp:LatencyTracker	disable tracker overhead
+device_config	interaction_jank_monitor/enabled	false	aosp:InteractionJankMonitor	disable monitor
+device_config	jobscheduler/enable_api_quotas	false	aosp:JobScheduler	off
+device_config	media_native/low_latency_aaudio	true	aosp:AAudio	low-latency audio path (Brawl Stars FX)
