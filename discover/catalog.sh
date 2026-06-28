@@ -44,44 +44,60 @@ categorize() {
     esac
 }
 
+# POSIX-safe tab — $'\t' is bash-only and breaks under Termux sh.
+TAB=$(printf '\t')
+
+# Strip tab/newline from values so col-4 stays "category" in the TSV.
+sanitize() { printf '%s' "$1" | tr '\t\n\r' '   '; }
+
 # --- 1. settings (global/system/secure) -----------------------------------
 for ns in global system secure; do
     f="$DUMP/settings.$ns.txt"
     [ -f "$f" ] || continue
-    # lines look like:  key=value   (value may contain =, so use 1-split)
     while IFS= read -r line; do
         key=${line%%=*}
         val=${line#*=}
         cat=$(categorize "$key")
+        val=$(sanitize "$val")
         printf "setting_%s\t%s\t%s\t%s\n" "$ns" "$key" "$val" "$cat" >> "$OUT"
     done < "$f"
 done
 
 # --- 2. system properties --------------------------------------------------
-# getprop output:  [key]: [value]
+PARSED=/data/local/tmp/.scewin-getprop.$$
 awk -F'\\]: \\[' '
     /^\[/ {
         k = substr($1, 2)
         v = substr($2, 1, length($2)-1)
+        gsub(/\t/, " ", v); gsub(/\r/, "", v)
         print k "\t" v
-    }' "$DUMP/getprop.txt" | while IFS=$'\t' read -r key val; do
-        cat=$(categorize "$key")
-        printf "prop\t%s\t%s\t%s\n" "$key" "$val" "$cat" >> "$OUT"
-    done
+    }' "$DUMP/getprop.txt" > "$PARSED"
+
+while IFS="$TAB" read -r key val; do
+    [ -z "$key" ] && continue
+    cat=$(categorize "$key")
+    printf "prop\t%s\t%s\t%s\n" "$key" "$val" "$cat" >> "$OUT"
+done < "$PARSED"
+rm -f "$PARSED"
 
 # --- 3. device_config ------------------------------------------------------
-# Format: lines of "key=value" preceded by "=== namespace: foo ===" headers
+PARSED=/data/local/tmp/.scewin-dc.$$
 awk '
     /^=== namespace: / { ns = $3; next }
     /=/ {
         i = index($0, "=")
         key = substr($0, 1, i-1)
         val = substr($0, i+1)
+        gsub(/\t/, " ", val); gsub(/\r/, "", val)
         print ns "/" key "\t" val
-    }' "$DUMP/device_config.txt" 2>/dev/null | while IFS=$'\t' read -r key val; do
-        cat=$(categorize "$key")
-        printf "device_config\t%s\t%s\t%s\n" "$key" "$val" "$cat" >> "$OUT"
-    done
+    }' "$DUMP/device_config.txt" 2>/dev/null > "$PARSED"
+
+while IFS="$TAB" read -r key val; do
+    [ -z "$key" ] && continue
+    cat=$(categorize "$key")
+    printf "device_config\t%s\t%s\t%s\n" "$key" "$val" "$cat" >> "$OUT"
+done < "$PARSED"
+rm -f "$PARSED"
 
 # --- 4. sysfs (CPU/GPU/devfreq) -------------------------------------------
 # These are lines like:  /sys/.../min_freq = 300000

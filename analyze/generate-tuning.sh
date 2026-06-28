@@ -66,20 +66,36 @@ is_always_present() {
     return 1
 }
 
+# POSIX-safe tab. $'\t' is a bash-ism; Termux's sh evaluates it literally.
+TAB=$(printf '\t')
+
 # Look up current value of a key in this device's dump.
 # Returns empty if not in the dump.
 current_value() {
-    kind="$1"; key="$2"
-    awk -F'\t' -v k="$kind" -v n="$key" '$1==k && $2==n {print $3; exit}' "$DUMP/knobs.tsv"
+    awk -F"$TAB" -v k="$1" -v n="$2" '$1==k && $2==n {print $3; exit}' "$DUMP/knobs.tsv"
 }
+
+# Live fallback for getprop: in case the prop wasn't captured into
+# knobs.tsv but is actually set on the device right now.
+live_prop_value() {
+    getprop "$1" 2>/dev/null
+}
+
+# Avoid pipe-to-while subshells — counters were getting lost AND
+# function inheritance is flaky across pipes in posix sh-mode bash.
+TMP=/data/local/tmp/.scewin-gen-known.$$
+tail -n +2 "$KNOWN" > "$TMP"
 
 apply_count=0
 skip_count=0
 
-# Parse known-impact-keys.tsv (skip header)
-tail -n +2 "$KNOWN" | while IFS=$'\t' read -r kind key target source notes; do
+while IFS="$TAB" read -r kind key target source notes; do
     [ -z "$kind" ] && continue
-    cur=$(current_value "$kind" "$key")
+
+    case "$kind" in
+        prop)            cur=$(live_prop_value "$key") ;;
+        *)               cur=$(current_value "$kind" "$key") ;;
+    esac
 
     # Decision: emit if currently present OR always-present
     if [ -z "$cur" ] && ! is_always_present "$key"; then
@@ -89,12 +105,14 @@ tail -n +2 "$KNOWN" | while IFS=$'\t' read -r kind key target source notes; do
     fi
     [ -z "$cur" ] && cur='<unset, framework default>'
 
-    # Emit the apply command, with the source noted inline
+    # Emit the apply command, with the source noted inline.
+    # All target values in known-impact-keys.tsv are simple tokens
+    # (no spaces, no shell metas) so double-quoting is enough.
     case "$kind" in
         prop)
-            printf '\n# %s    (was: %s)    [%s]\nsetprop %s %s\n' \
-                "$notes" "$cur" "$source" "$key" "$(printf '%q' "$target")" >> "$APPLY"
-            printf '\nsetprop %s %s\n' "$key" "$(printf '%q' "$cur")" >> "$REVERT"
+            printf '\n# %s    (was: %s)    [%s]\nsetprop "%s" "%s"\n' \
+                "$notes" "$cur" "$source" "$key" "$target" >> "$APPLY"
+            printf '\nsetprop "%s" "%s"\n' "$key" "$cur" >> "$REVERT"
             ;;
         setting_global)
             printf '\n# %s    (was: %s)\nsettings put global %s %s\n' \
@@ -119,7 +137,8 @@ tail -n +2 "$KNOWN" | while IFS=$'\t' read -r kind key target source notes; do
             ;;
     esac
     apply_count=$((apply_count+1))
-done
+done < "$TMP"
+rm -f "$TMP"
 
 # tail of apply.sh — final hook for one-shot service restarts that
 # make some properties take effect immediately

@@ -39,11 +39,14 @@ mkdir -p "$TMP"
 extract "$A/knobs.tsv" > "$TMP/a"
 extract "$B/knobs.tsv" > "$TMP/b"
 
+# POSIX-safe tab — $'\t' is a bash-ism.
+TAB=$(printf '\t')
+
 # 1) keys whose value changed
 echo "=========================================================="
 echo "  changed values (most likely the knob you toggled flipped)"
 echo "=========================================================="
-join -t $'\t' -j 1 -o 1.1,1.2,1.3,2.3 \
+join -t "$TAB" -j 1 -o 1.1,1.2,1.3,2.3 \
     <(awk -F'\t' '{print $1 "::" $2 "\t" $1 "\t" $2 "\t" $3}' "$TMP/a" | sort) \
     <(awk -F'\t' '{print $1 "::" $2 "\t" $1 "\t" $2 "\t" $3}' "$TMP/b" | sort) \
     2>/dev/null \
