@@ -167,7 +167,10 @@ echo "wrote $APPLY"
 echo "wrote $REVERT"
 echo "wrote $SKIPPED  (keys not present on this device)"
 echo
-echo "applied:  ~$(grep -c '^setprop\|^settings put\|^device_config put' "$APPLY") commands"
+# Use grep -E for POSIX alternation; toybox grep on Android treats \| as
+# literal under default BRE, returning 0 for everything.
+applied_n=$(grep -cE '^(setprop|settings put|device_config put)' "$APPLY")
+echo "applied:  ~$applied_n commands"
 echo "skipped:  $(wc -l < "$SKIPPED") known-impact keys not present on this firmware"
 echo
 echo "Review $APPLY before running. To execute:  sh $APPLY"
