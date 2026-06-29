@@ -12,9 +12,14 @@
 
 set -u
 DUMP="${1:-/sdcard/scewin-dump-latest}"
+# Resolve the "latest" pointer file (since /sdcard can't hold symlinks).
+if [ "$DUMP" = "/sdcard/scewin-dump-latest" ] && [ -f /sdcard/scewin-dump-latest.path ]; then
+    DUMP=$(cat /sdcard/scewin-dump-latest.path)
+fi
 if [ ! -d "$DUMP" ]; then
     echo "no such dump dir: $DUMP" >&2; exit 1
 fi
+echo "[catalog] using dump: $DUMP"
 
 OUT="$DUMP/knobs.tsv"
 : > "$OUT"
@@ -64,7 +69,7 @@ for ns in global system secure; do
 done
 
 # --- 2. system properties --------------------------------------------------
-PARSED=/data/local/tmp/.scewin-getprop.$$
+PARSED="$DUMP/.parse-getprop.$$"
 awk -F'\\]: \\[' '
     /^\[/ {
         k = substr($1, 2)
@@ -81,7 +86,7 @@ done < "$PARSED"
 rm -f "$PARSED"
 
 # --- 3. device_config ------------------------------------------------------
-PARSED=/data/local/tmp/.scewin-dc.$$
+PARSED="$DUMP/.parse-dc.$$"
 awk '
     /^=== namespace: / { ns = $3; next }
     /=/ {

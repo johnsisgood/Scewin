@@ -10,12 +10,16 @@
 
 set -u
 DUMP="${1:-/sdcard/scewin-dump-latest}"
+if [ "$DUMP" = "/sdcard/scewin-dump-latest" ] && [ -f /sdcard/scewin-dump-latest.path ]; then
+    DUMP=$(cat /sdcard/scewin-dump-latest.path)
+fi
 KNOWN="$(dirname $0)/known-impact-keys.tsv"
 
 if [ ! -f "$DUMP/knobs.tsv" ]; then
     echo "no knobs.tsv in $DUMP — run discover/catalog.sh first" >&2
     exit 1
 fi
+echo "[generate] using dump: $DUMP"
 if [ ! -f "$KNOWN" ]; then
     echo "missing $KNOWN" >&2; exit 1
 fi
@@ -83,7 +87,7 @@ live_prop_value() {
 
 # Avoid pipe-to-while subshells — counters were getting lost AND
 # function inheritance is flaky across pipes in posix sh-mode bash.
-TMP=/data/local/tmp/.scewin-gen-known.$$
+TMP="$DUMP/.gen-known.$$"
 tail -n +2 "$KNOWN" > "$TMP"
 
 apply_count=0

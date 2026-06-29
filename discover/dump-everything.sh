@@ -195,12 +195,15 @@ cat /proc/sys/kernel/sched_latency_ns          > "$OUT/procfs/sched_latency_ns" 
 cat /proc/sys/kernel/sched_min_granularity_ns  > "$OUT/procfs/sched_min_gran"   2>/dev/null
 cat /proc/sys/kernel/sched_migration_cost_ns   > "$OUT/procfs/sched_mig_cost"   2>/dev/null
 
-# ---------- 10. link as -latest --------------------------------------------
-rm -f /sdcard/scewin-dump-latest
-ln -s "$OUT" /sdcard/scewin-dump-latest 2>/dev/null || \
-    cp -r "$OUT" /sdcard/scewin-dump-latest
+# ---------- 10. record latest dump path -----------------------------------
+# /sdcard is FAT/sdcardfs and doesn't support symlinks, so we write a
+# pointer file containing the path instead. Catalog/generate scripts
+# resolve "/sdcard/scewin-dump-latest" through this file.
+rm -rf /sdcard/scewin-dump-latest 2>/dev/null
+printf '%s\n' "$OUT" > /sdcard/scewin-dump-latest.path
 
 log "Done. Dump at: $OUT"
-log "Symlink: /sdcard/scewin-dump-latest"
 log ""
-log "Next: sh discover/catalog.sh $OUT"
+log "Next:"
+log "  sh discover/catalog.sh $OUT"
+log "  sh analyze/generate-tuning.sh $OUT"
