@@ -57,3 +57,8 @@ device_config	latency_tracker/enabled	false	aosp:LatencyTracker	disable tracker 
 device_config	interaction_jank_monitor/enabled	false	aosp:InteractionJankMonitor	disable monitor
 device_config	jobscheduler/enable_api_quotas	false	aosp:JobScheduler	off
 device_config	media_native/low_latency_aaudio	true	aosp:AAudio	low-latency audio path (Brawl Stars FX)
+setting_global	wifi_watchdog_poor_network_test_enabled	0	aosp:Settings.Global	stop the periodic active poor-network probe that contends airtime mid-game
+setting_global	network_recommendations_enabled	0	aosp:Settings.Global	disable the network scorer's background scanning/work
+setting_global	wifi_non_persistent_mac_randomization_enabled	0	aosp:Settings.Global	avoid per-association MAC randomization reassoc delay (also set the SSID to use device MAC)
+setting_global	wifi_scan_always_enabled	0	aosp:Settings.Global	stop always-on scanning that steals airtime from your active link
+setting_global	wifi_frameworks_scan_only_mode	0	aosp:Settings.Global	disable framework scan-only background passes

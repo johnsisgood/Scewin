@@ -46,6 +46,12 @@ diff/
   diff-state.sh             two dumps → exact list of keys a UI option flipped
                               this is how you find Samsung's undocumented knobs
 
+network/
+  wifi-latency.md           the part that actually decides an ONLINE game:
+                              WiFi power-save (the #1 win, hidden, root),
+                              no-root scan/scorer knobs, router pairing, and
+                              how to measure jitter instead of guessing
+
 reverse-engineering/
   targets.md                Tab S7 binaries worth pulling and decompiling
                               with concrete file paths, what to grep, what

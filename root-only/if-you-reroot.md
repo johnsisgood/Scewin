@@ -7,6 +7,13 @@ root because they write to sysfs nodes that init chmods to 0644 root.
 Knox is already tripped, so Magisk doesn't cost you anything you haven't
 already lost. The script-by-script breakdown:
 
+> **Before any of the compute knobs below: do `network/wifi-latency.md` §1
+> first.** For an online game, killing WiFi power-save (`iw dev wlan0 set
+> power_save off`, or Broadcom-native `wl PM 0` on this chip) removes more
+> *felt* lag than every CPU/GPU pin here combined — it cuts tens of ms of
+> per-packet jitter. It's also root-only, so it belongs in the same
+> Magisk service.d script as the pins below.
+
 ## 1. Pin CPU clusters to performance + min freq (Tab S7 = kona SoC)
 
 The 865+ has three clusters:
