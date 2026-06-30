@@ -181,5 +181,12 @@ Without root you are leaving the *biggest* wins on the table:
 
 What you *do* get no-root: 120 Hz lock, animations off, freezer/standby/
 doze defeated for the game, input-tracing/jank-monitor overhead off, and
-the `debug.sf.*`/`debug.hwui.*` latency path. That's a real, measurable
-chunk — just not the order-of-magnitude stuff in `root-only/`.
+the per-app `debug.hwui`/`debug.choreographer`/`debug.egl` knobs (which
+apply when you force-stop and reopen the game).
+
+One honest catch: `debug.sf.*` set fine (shell can write debug_prop) but
+stay **inert** without root — SurfaceFlinger only re-reads them when it
+restarts, which needs root, and a reboot just clears the non-persistent
+props. So count `debug.sf.*` as root-only-effective. The no-root set is
+still a real, measurable chunk — just not the order-of-magnitude stuff in
+`root-only/`.

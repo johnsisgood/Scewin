@@ -220,13 +220,15 @@ cat "$APPLY_R" >> "$APPLY"
 
 cat >> "$APPLY" <<'EOF'
 
-# --- post-apply: nudge services so debug.sf.* / debug.hwui.* take effect ---
-# SurfaceFlinger picks up debug.sf.* on next boot OR via service restart.
-# The cleanest way without rebooting (works from shell uid):
-service call SurfaceFlinger 1008 i32 1 >/dev/null 2>&1   # repaint everything
-echo "applied. settings/device_config persist across reboot;"
-echo "debug.* props reset on reboot — re-run this script after a reboot,"
-echo "or reboot now for SurfaceFlinger to pick up debug.sf.* fully."
+# --- post-apply notes -------------------------------------------------------
+service call SurfaceFlinger 1008 i32 1 >/dev/null 2>&1   # force a repaint
+echo "applied (no-root section)."
+echo "  settings + device_config : persist across reboot — done."
+echo "  debug.hwui/choreographer/egl : per-app. Force-stop and REOPEN Brawl"
+echo "      Stars to apply them. (Cleared on reboot — re-run, then reopen.)"
+echo "  debug.sf.* : read only when SurfaceFlinger restarts, which needs"
+echo "      root. Without root setprop succeeds but they stay INERT, and a"
+echo "      reboot just clears them. Treat debug.sf.* as root-only-effective."
 EOF
 
 # ---- assemble revert.sh the same way ----
