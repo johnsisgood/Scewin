@@ -252,6 +252,17 @@ EOF
 rm -f "$APPLY_NR" "$APPLY_R" "$REVERT_NR" "$REVERT_R"
 chmod +x "$APPLY" "$REVERT"
 
+# Stable convenience copies. The per-run apply.sh lives in a timestamped
+# dir, and "scewin-dump-latest" is only a pointer FILE (sdcard can't hold
+# symlinks), so `sh /sdcard/scewin-dump-latest/apply.sh` never works. These
+# fixed-name copies always point at the most recent generation. apply.sh is
+# self-contained, so a plain copy runs fine.
+PARENT=$(dirname "$DUMP")
+APPLY_STABLE="$PARENT/scewin-apply-latest.sh"
+REVERT_STABLE="$PARENT/scewin-revert-latest.sh"
+cp "$APPLY" "$APPLY_STABLE" 2>/dev/null && chmod +x "$APPLY_STABLE" 2>/dev/null
+cp "$REVERT" "$REVERT_STABLE" 2>/dev/null && chmod +x "$REVERT_STABLE" 2>/dev/null
+
 echo "wrote $APPLY"
 echo "wrote $REVERT"
 echo "wrote $SKIPPED  (keys not present on this device)"
@@ -264,7 +275,7 @@ echo "  apply WITHOUT root:  $noroot_count   (settings, device_config, debug.* p
 echo "  need root (guarded): $root_count   (vendor/persist/dalvik props, sysfs)"
 echo "skipped:               $(wc -l < "$SKIPPED") known-impact keys not present on this firmware"
 echo
-echo "Review $APPLY before running. To execute without root (shell uid):"
-echo "    rish -c \"sh $APPLY\"      # Shizuku"
-echo "    sh $APPLY                  # LADB, or adb shell"
-echo "To revert at any time:  sh $REVERT"
+echo "Review, then apply — use these stable paths (no need to chase the timestamp):"
+echo "    cat $APPLY_STABLE       # review first"
+echo "    sh  $APPLY_STABLE       # apply  (root-only knobs auto-skip if not root)"
+echo "    sh  $REVERT_STABLE      # revert anytime"

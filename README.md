@@ -80,12 +80,14 @@ sh discover/dump-everything.sh
 sh discover/catalog.sh /sdcard/scewin-dump-latest
 sh analyze/generate-tuning.sh /sdcard/scewin-dump-latest
 
-# review the generated scripts — both are specific to YOUR device:
-cat /sdcard/scewin-dump-latest/apply.sh      # split: NO-ROOT + guarded ROOT-ONLY
-cat /sdcard/scewin-dump-latest/revert.sh
+# review the generated scripts — both are specific to YOUR device.
+# generate-tuning.sh writes stable copies at fixed paths (the timestamped
+# dir changes every run, and scewin-dump-latest is a pointer FILE not a dir):
+cat /sdcard/scewin-apply-latest.sh           # split: NO-ROOT + guarded ROOT-ONLY
+cat /sdcard/scewin-revert-latest.sh
 
 # apply when ready (root-only knobs auto-skip cleanly if you're not root):
-sh /sdcard/scewin-dump-latest/apply.sh
+sh /sdcard/scewin-apply-latest.sh
 ```
 
 ## Finding knobs the curated list doesn't know about

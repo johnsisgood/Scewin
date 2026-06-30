@@ -82,9 +82,12 @@ Debugging** — that's the key. It lets the device authorize ADB to itself.
    sh /sdcard/Scewin/discover/dump-everything.sh
    sh /sdcard/Scewin/discover/catalog.sh /sdcard/scewin-dump-latest
    sh /sdcard/Scewin/analyze/generate-tuning.sh /sdcard/scewin-dump-latest
-   sh /sdcard/scewin-dump-latest/apply.sh
+   cat /sdcard/scewin-apply-latest.sh    # review (stable path, written by generate)
+   sh  /sdcard/scewin-apply-latest.sh    # apply
    ```
-   (Or one-shot without entering the shell: `~/rish -c "sh .../apply.sh"`.)
+   Note: `scewin-dump-latest` is a pointer FILE, not a dir — use the stable
+   `scewin-apply-latest.sh` copy (or resolve it:
+   `D=$(cat /sdcard/scewin-dump-latest.path); sh "$D/apply.sh"`).
 
 Shizuku stops when the device reboots (no root to persist it). Re-tap
 "Start via Wireless debugging" after each reboot, then `~/rish` works
@@ -97,7 +100,7 @@ Wireless Debugging. You get a shell-UID terminal with no companion app and
 no PC. Same commands, just type them in LADB's terminal:
 ```sh
 sh /sdcard/Scewin/analyze/generate-tuning.sh /sdcard/scewin-dump-latest
-sh /sdcard/scewin-dump-latest/apply.sh
+sh /sdcard/scewin-apply-latest.sh
 ```
 
 ### Option C — PC once over USB
@@ -107,7 +110,7 @@ adb push . /data/local/tmp/Scewin
 adb shell sh /data/local/tmp/Scewin/discover/dump-everything.sh
 adb shell sh /data/local/tmp/Scewin/discover/catalog.sh /sdcard/scewin-dump-latest
 adb shell sh /data/local/tmp/Scewin/analyze/generate-tuning.sh /sdcard/scewin-dump-latest
-adb shell sh /sdcard/scewin-dump-latest/apply.sh
+adb shell sh /sdcard/scewin-apply-latest.sh
 ```
 (You can switch to wireless with `adb tcpip 5555` and unplug.)
 
