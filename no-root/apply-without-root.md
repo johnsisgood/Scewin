@@ -21,6 +21,31 @@ So "no root" really means **"run as shell UID."** Bare Termux is app UID
 and will throw `SecurityException` on almost everything here. You need one
 of the three contexts below.
 
+## First: put the kit where shell UID can read it
+
+The shell user (uid 2000) **cannot read Termux's private home**
+(`/data/data/com.termux`, mode 700). So the kit must live on `/sdcard`,
+which both Termux and the rish/shell context can read. Get it there from a
+normal Termux prompt (not rish):
+
+```sh
+# No token — download the branch ZIP from GitHub in your browser
+# (repo → branch claude/... → Code → Download ZIP), then:
+termux-setup-storage          # tap Allow
+pkg install unzip
+cd /sdcard
+unzip ~/storage/downloads/scewin-*.zip
+mv scewin-* Scewin            # extracted folder → /sdcard/Scewin
+
+# OR with git + a Personal Access Token:
+pkg install git
+git clone -b <branch> https://<user>:<token>@github.com/<owner>/scewin.git /sdcard/Scewin
+```
+
+`/sdcard` is mounted noexec, so always invoke scripts with `sh script.sh`
+(the kit already does this everywhere). Dumps land in `/sdcard/scewin-dump-*`
+which shell UID can also write.
+
 ## How to get shell UID with NO root and NO PC
 
 Your Tab S7 is on One UI 5/6 (Android 13/14), which has **Wireless
