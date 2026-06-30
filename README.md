@@ -57,6 +57,11 @@ reverse-engineering/
                               with concrete file paths, what to grep, what
                               kind of hidden setprop calls you're hunting
 
+no-root/
+  apply-without-root.md     how to apply everything that does NOT need root
+                              from a shell-UID context (Shizuku / LADB / adb),
+                              with NO PC. The app-UID vs shell-UID matrix.
+
 root-only/
   if-you-reroot.md          the order-of-magnitude wins that need root
                               (CPU/GPU freq pin, DDR pin, EAS off, touch IC)
@@ -64,17 +69,22 @@ root-only/
 
 ## Quick start (no root, your stock T870/T875/T876)
 
+You need a **shell-UID** context, not bare Termux. On One UI 5/6 the
+no-root, no-PC way is Shizuku or LADB over Wireless Debugging — see
+`no-root/apply-without-root.md`. Then:
+
 ```sh
-# On the tablet, via Termux (or via `adb push` then `adb shell`):
+# Run as shell uid. Shizuku: prefix each with  rish -c "..."
+#                   LADB / adb shell: run directly.
 sh discover/dump-everything.sh
 sh discover/catalog.sh /sdcard/scewin-dump-latest
 sh analyze/generate-tuning.sh /sdcard/scewin-dump-latest
 
 # review the generated scripts — both are specific to YOUR device:
-cat /sdcard/scewin-dump-latest/apply.sh
+cat /sdcard/scewin-dump-latest/apply.sh      # split: NO-ROOT + guarded ROOT-ONLY
 cat /sdcard/scewin-dump-latest/revert.sh
 
-# apply when ready:
+# apply when ready (root-only knobs auto-skip cleanly if you're not root):
 sh /sdcard/scewin-dump-latest/apply.sh
 ```
 
