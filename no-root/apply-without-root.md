@@ -32,18 +32,38 @@ Debugging** — that's the key. It lets the device authorize ADB to itself.
 2. Settings → Developer options → enable **Wireless debugging**.
 3. In Shizuku, tap **"Start via Wireless debugging"** and follow the
    pairing prompt (it walks you through the pair-code step once).
-4. Shizuku is now running as shell UID. Install its companion shell
-   **`rish`**, or any app with Shizuku integration.
-5. Run the kit through `rish`:
+4. Shizuku is now running as shell UID. `rish` is not a separate app — it
+   is two files shipped inside the Shizuku APK (`rish` + `rish_shizuku.dex`)
+   that you run from a terminal like Termux. Install it once:
+
    ```sh
-   rish -c "sh /sdcard/Scewin/discover/dump-everything.sh"
-   rish -c "sh /sdcard/Scewin/discover/catalog.sh /sdcard/scewin-dump-latest"
-   rish -c "sh /sdcard/Scewin/analyze/generate-tuning.sh /sdcard/scewin-dump-latest"
-   rish -c "sh /sdcard/scewin-dump-latest/apply.sh"
+   # In Termux, with Shizuku running. APKs are world-readable, so no root:
+   cp "$(pm path moe.shizuku.privileged.api | sed 's/package://')" ~/shizuku.apk
+   unzip -o ~/shizuku.apk 'assets/rish*' -d ~/
+   mv ~/assets/rish ~/assets/rish_shizuku.dex ~/     # both must sit together
+   chmod +x ~/rish
+   # tell rish which app calls it (Termux = com.termux):
+   echo 'export RISH_APPLICATION_ID=com.termux' >> ~/.bashrc
+   export RISH_APPLICATION_ID=com.termux
+   ~/rish
+   id        # must print uid=2000(shell) — that's your no-root power level
    ```
 
+   (Some Shizuku versions also expose a save/extract button under
+   "Use Shizuku in terminal apps" — either way you need those two files.)
+
+5. From the `~/rish` shell, run the kit:
+   ```sh
+   sh /sdcard/Scewin/discover/dump-everything.sh
+   sh /sdcard/Scewin/discover/catalog.sh /sdcard/scewin-dump-latest
+   sh /sdcard/Scewin/analyze/generate-tuning.sh /sdcard/scewin-dump-latest
+   sh /sdcard/scewin-dump-latest/apply.sh
+   ```
+   (Or one-shot without entering the shell: `~/rish -c "sh .../apply.sh"`.)
+
 Shizuku stops when the device reboots (no root to persist it). Re-tap
-"Start via Wireless debugging" after each reboot — takes 5 seconds.
+"Start via Wireless debugging" after each reboot, then `~/rish` works
+again — takes 5 seconds.
 
 ### Option B — LADB (single self-contained app)
 
