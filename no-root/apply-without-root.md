@@ -25,26 +25,32 @@ of the three contexts below.
 
 The shell user (uid 2000) **cannot read Termux's private home**
 (`/data/data/com.termux`, mode 700). So the kit must live on `/sdcard`,
-which both Termux and the rish/shell context can read. Get it there from a
-normal Termux prompt (not rish):
+which both Termux and the rish/shell context can read.
+
+The repo is public, so `git clone` needs no login or token. Do this in a
+normal **Termux** prompt (`~ $`), NOT in rish:
 
 ```sh
-# No token — download the branch ZIP from GitHub in your browser
-# (repo → branch claude/... → Code → Download ZIP), then:
-termux-setup-storage          # tap Allow
-pkg install unzip
-cd /sdcard
-unzip ~/storage/downloads/scewin-*.zip
-mv scewin-* Scewin            # extracted folder → /sdcard/Scewin
-
-# OR with git + a Personal Access Token:
 pkg install git
-git clone -b <branch> https://<user>:<token>@github.com/<owner>/scewin.git /sdcard/Scewin
+cd /sdcard
+rm -rf Scewin        # clear any stale copy first
+git clone -b claude/tab-s7-brawl-stars-latency-bhdyby \
+  https://github.com/johnsisgood/Scewin.git Scewin
+ls Scewin            # must include  network  no-root  analyze  discover
+```
+
+To update later when the kit changes:
+
+```sh
+cd /sdcard/Scewin && git pull
 ```
 
 `/sdcard` is mounted noexec, so always invoke scripts with `sh script.sh`
 (the kit already does this everywhere). Dumps land in `/sdcard/scewin-dump-*`
 which shell UID can also write.
+
+Reminder: clone/`git`/`pkg` run in **Termux** (`~ $`); the kit scripts run
+in **rish** (uid 2000). Don't mix the two.
 
 ## How to get shell UID with NO root and NO PC
 

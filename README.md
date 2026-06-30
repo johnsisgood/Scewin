@@ -71,11 +71,21 @@ root-only/
 
 You need a **shell-UID** context, not bare Termux. On One UI 5/6 the
 no-root, no-PC way is Shizuku or LADB over Wireless Debugging — see
-`no-root/apply-without-root.md`. Then:
+`no-root/apply-without-root.md`.
+
+First get the kit onto /sdcard (public repo, no login). In **Termux**:
 
 ```sh
-# Run as shell uid. Shizuku: prefix each with  rish -c "..."
-#                   LADB / adb shell: run directly.
+pkg install git
+cd /sdcard
+git clone -b claude/tab-s7-brawl-stars-latency-bhdyby \
+  https://github.com/johnsisgood/Scewin.git Scewin
+```
+
+Then in a **shell-UID** context (`~/rish`, LADB, or `adb shell`):
+
+```sh
+cd /sdcard/Scewin
 sh discover/dump-everything.sh
 sh discover/catalog.sh /sdcard/scewin-dump-latest
 sh analyze/generate-tuning.sh /sdcard/scewin-dump-latest
