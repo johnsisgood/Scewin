@@ -128,9 +128,17 @@ With GOS out of the way, the AOSP GameManager path still applies. Put
 Brawl Stars in performance mode:
 
 ```sh
+cmd game list-modes com.supercell.brawlstars      # check first — most games only list mode 1
 cmd game set --mode 2 com.supercell.brawlstars    # 2 = performance
-cmd game list-modes com.supercell.brawlstars      # verify
 ```
+
+**Verified on-device**: Brawl Stars returns `Game mode: 2 not supported by
+com.supercell.brawlstars` — it doesn't opt into the Android GameManager
+API at all (most third-party games don't; this API needs manifest
+support from the app). Check `list-modes` first and only bother with
+`set --mode` if it actually lists more than the default. Not a loss —
+GOS removal (§2.1) and fixed performance mode (§2.3) are the levers that
+matter for a game with no GameManager support.
 
 ### 2.3 Fixed performance mode — clock *stability* over burst
 
@@ -268,24 +276,46 @@ haptics off (the vibration wake path costs single-digit ms). On top:
 
 ## 4. Network stack — Wi-Fi latency
 
-### 4.1 Force low-latency mode (the headline command)
+### 4.1 Force low-latency mode (try this first — may be blocked on your firmware)
 
 ```sh
 cmd wifi force-low-latency-mode enabled
 ```
 
-This forces the `WIFI_MODE_FULL_LOW_LATENCY` lock globally: the QCA6390
-firmware disables IEEE 802.11 power-save (the doze/poll cycle that adds
-a spiky 20–100ms to packets while the radio sleeps between beacons) and
-tightens interrupt coalescing. It is exactly the lock a well-behaved
-game would hold — forced on, for everything, while the screen is on.
+In stock AOSP this forces the `WIFI_MODE_FULL_LOW_LATENCY` lock
+globally: the QCA6390 firmware disables IEEE 802.11 power-save (the
+doze/poll cycle that adds a spiky 20–100ms to packets while the radio
+sleeps between beacons) and tightens interrupt coalescing.
 
-- Verify: `dumpsys wifi | grep -i latency` (look for the forced/low
-  latency state), then watch §6's ping test — the p99 spikes are what
-  this kills.
+**Verified finding**: on One UI (tested via Shizuku on a T870), this
+throws `SecurityException: Uid 2000 does not have access to
+force-low-latency-mode wifi command`. Samsung's `WifiServiceImpl` gates
+this specific subcommand behind a permission the shell uid doesn't hold
+on this build — it's not a typo or a missing flag, it's firmware
+hardening, and there's no shell-level way around it. If it works for
+you, great:
+
+- Verify: `dumpsys wifi | grep -i latency`, then §6's ping test.
 - Does **not** persist across reboot → §5 preflight.
-- Revert: `cmd wifi force-low-latency-mode disabled`. Battery cost while
-  screen-on is real (radio never naps); it only applies while awake.
+- Revert: `cmd wifi force-low-latency-mode disabled`.
+
+**If you get the SecurityException instead**, this drops to the root
+line (kernel/driver power-save params, `root-only/if-you-reroot.md`
+territory) *unless* Samsung exposes an equivalent as a Settings toggle.
+Check Settings → Connections → Wi-Fi → (tap your network) → Advanced,
+and any "Intelligent Wi-Fi" power-saving switch. Use the repo's own
+discovery loop to find the backing key instead of guessing:
+
+```sh
+sh discover/dump-everything.sh        # snapshot A
+# flip the Wi-Fi power-saving toggle in Settings
+sh discover/dump-everything.sh        # snapshot B
+sh diff/diff-state.sh dump-A dump-B   # → the exact key Samsung uses
+```
+
+Whatever key that surfaces is worth a PR back into
+`analyze/known-impact-keys.tsv` — this is exactly the gap the curated
+list can't close from outside a real device.
 
 ### 4.2 Kill the scan machinery
 
