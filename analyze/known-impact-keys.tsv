@@ -47,6 +47,8 @@ setting_system	show_touches	0	aosp:Settings.System	off (debug overhead)
 setting_system	peak_refresh_rate	120	aosp:Settings.System	force 120Hz ceiling
 setting_system	min_refresh_rate	120	aosp:Settings.System	force 120Hz floor
 setting_secure	immersive_mode_confirmations	confirmed	aosp:Settings.Secure	stop immersive prompt overlay
+setting_secure	refresh_rate_mode	2	samsung:one-ui-display	Samsung mode selector; pairs with peak/min_refresh_rate to hold 120Hz
+setting_global	sem_enhanced_cpu_responsiveness	1	samsung:one-ui-perf	One UI input-boost escalation knob
 device_config	activity_manager/max_phantom_processes	2147483647	aosp:ActivityManagerService	stop phantom process kills (Brawl Stars background services)
 device_config	activity_manager_native_boot/use_compaction	false	aosp:CachedAppOptimizer	disable forced compaction
 device_config	activity_manager_native_boot/use_freezer	false	aosp:CachedAppOptimizer	disable cached-app freezer

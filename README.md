@@ -51,6 +51,12 @@ reverse-engineering/
                               with concrete file paths, what to grep, what
                               kind of hidden setprop calls you're hunting
 
+no-root/
+  playbook.md               the full no-root deep-tuning guide: Shizuku/LADB
+                              access, GOS neutering, game mode, fixed perf
+                              mode, forced 120Hz, Wi-Fi low-latency mode —
+                              the cmd/pm knobs apply.sh can't express
+
 root-only/
   if-you-reroot.md          the order-of-magnitude wins that need root
                               (CPU/GPU freq pin, DDR pin, EAS off, touch IC)
@@ -71,6 +77,12 @@ cat /sdcard/scewin-dump-latest/revert.sh
 # apply when ready:
 sh /sdcard/scewin-dump-latest/apply.sh
 ```
+
+Then work through `no-root/playbook.md` — it covers the shell setup
+(Shizuku/LADB, no PC needed) plus the `cmd`/`pm` knobs that can't be
+expressed as settings lines: Samsung's GOS throttler, Android 13 game
+mode, Wi-Fi low-latency mode, forced 120Hz, and what does/doesn't
+survive a reboot.
 
 ## Finding knobs the curated list doesn't know about
 
