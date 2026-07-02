@@ -424,3 +424,60 @@ blame.
 
 A plain `settings delete <ns> <key>` restores framework-default behavior
 for any settings key here — that's always the safe exit.
+
+---
+
+## 8. "I still feel delay" — triage first, then maxout
+
+### 8a. Find out WHICH delay you have (60 seconds, in a match)
+
+Watch the in-game ping indicator during the moments that feel late:
+
+| Symptom | The delay is | The lever |
+|---|---|---|
+| Ping number spikes when it feels bad | **network** | §4; if low-latency mode is firmware-blocked, it's router placement/5GHz or root |
+| Ping steady, but motion stutters/hitches | **frame pacing** | rerun `apply.sh` (props die on reboot!), §8b thermal override, MAXOUT_FREEZE |
+| Smooth and low ping, taps just feel late | **input path** | mostly spent without root — touch IC active-mode is the remaining ~ms and it's root-only |
+
+And one that no system tweak fixes: **the game's own frame cap**. If
+Brawl Stars' in-game setting is at 60fps, you carry a hard 16.7ms
+quantization no shell command removes — the per-app fps override needs
+GameManager support the game doesn't declare. Max the in-game FPS
+setting first.
+
+### 8b. maxout.sh — the last no-root tier, in one command
+
+```sh
+rish
+MAXOUT_FREEZE=1 MAXOUT_BT=1 sh no-root/maxout.sh    # add MAXOUT_RES=1 for GPU headroom
+```
+
+Beyond re-running everything above idempotently, it adds the tier this
+doc hadn't spent yet:
+
+- `cmd thermalservice override-status 0` — mutes the *framework* thermal
+  signal, which is what silently drops you from 120Hz to 60Hz and dims
+  the panel mid-session. Vendor thermal-engine still protects the
+  silicon; this only stops the framework's polite pre-throttling.
+- `am kill-all` — flush every cached background process before the match.
+- `MAXOUT_FREEZE=1` — freezes the periodic background wakers (Bixby,
+  Samsung Free, Customization Service/rubin, Facebook stubs, OneDrive,
+  telemetry agents…). Each wake is a scheduler theft; on a busy One UI
+  install this is worth more than any single settings key. Recorded to
+  a state file; `restore.sh` unfreezes exactly what it froze.
+- `MAXOUT_BT=1` / location off — radio and GNSS wakeups out of the path.
+- `MAXOUT_RES=1` (`wm size 1920x1200`) — ~44% fewer pixels for the
+  Adreno 650, buying frame-time headroom at native-sharpness cost.
+
+Undo everything: `sh no-root/restore.sh`.
+
+### 8c. The honest ceiling
+
+After maxout, the no-root surface is spent. What remains — and it's the
+order-of-magnitude tier, not scraps — is all in
+`root-only/if-you-reroot.md`: governor/frequency pinning for CPU, GPU
+and DDR, EAS migration off, the touch IC forced to 240Hz active mode,
+and the Wi-Fi power-save knob your firmware blocked at §4.1. If the
+triage says frame pacing or input path and you genuinely don't care
+about anything else, re-rooting is the answer; every further hour spent
+on no-root tweaks is chasing single-digit percentages.

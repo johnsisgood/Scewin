@@ -56,6 +56,10 @@ no-root/
                               access, GOS neutering, game mode, fixed perf
                               mode, forced 120Hz, Wi-Fi low-latency mode —
                               the cmd/pm knobs apply.sh can't express
+  maxout.sh                 one-shot max-aggression: re-applies apply.sh,
+                              fixed perf mode, thermal override, bloat
+                              freeze, kill-all — playbook §8
+  restore.sh                undoes exactly what maxout.sh did
 
 root-only/
   if-you-reroot.md          the order-of-magnitude wins that need root
